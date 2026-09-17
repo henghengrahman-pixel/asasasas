@@ -1,0 +1,2 @@
+import{api}from'../core/api.js';import{toast}from'../core/ui.js';
+const f=document.querySelector('#profileForm');async function load(){const r=await api('/api/website-profile');for(const e of f.elements)if(e.name)e.value=r.profile?.[e.name]||''}f.onsubmit=async e=>{e.preventDefault();const x=Object.fromEntries(new FormData(f));await api('/api/website-profile',{method:'PUT',body:JSON.stringify(x)});toast('Website Profile tersimpan')};load();
