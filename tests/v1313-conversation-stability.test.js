@@ -1,0 +1,21 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {createConversationStore} from '../public/assets/js/pages/conversation-store.js';
+const read=p=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
+const conv=read('public/assets/js/pages/conversations.js');
+const api=read('public/assets/js/core/api.js');
+const server=read('src/server.js');
+const css=read('public/assets/css/conversations.css');
+
+test('stale row data is replaced by latest store item',()=>{const s=createConversationStore();s.replace([{chat_id:'A',customer_name:'Old',handling_mode:'AI'}]);s.upsert({chat_id:'A',customer_name:'New',handling_mode:'HUMAN'});assert.equal(s.get('A').customer_name,'New');assert.equal(s.get('A').handling_mode,'HUMAN')});
+test('selected chat survives reorder',()=>{const s=createConversationStore();s.replace([{chat_id:'A'},{chat_id:'B'},{chat_id:'C'}]);s.select('B');s.reorder(['C','B','A']);assert.equal(s.state.selectedChatId,'B');assert.deepEqual(s.items().map(x=>x.chat_id),['C','B','A'])});
+test('closed chat removal clears selected state',()=>{const s=createConversationStore();s.replace([{chat_id:'A'},{chat_id:'B'}]);s.select('A');s.remove('A');assert.equal(s.state.selectedChatId,'');assert.deepEqual(s.items().map(x=>x.chat_id),['B'])});
+test('rapid switch is guarded by abort and detail request version',()=>{assert.match(conv,/detailAbort\?\.abort/);assert.match(conv,/detailVersion/);assert.match(conv,/version!==state\.detailVersion/);assert.match(conv,/selected\(\)!==id/)});
+test('detail error and timeout always terminate loading',()=>{assert.match(conv,/detailError\(/);assert.match(conv,/COBA LAGI/);assert.match(api,/REQUEST_TIMEOUT/);assert.match(api,/setTimeout/)});
+test('polling uses single-flight recursive timeout, latest-request-wins and backoff',()=>{assert.match(conv,/reason==='poll'/);assert.match(conv,/background_busy/);assert.match(conv,/active\.controller\.abort/);assert.match(conv,/setTimeout\(async\(\)=>/);assert.doesNotMatch(conv,/setInterval\(/);assert.match(conv,/pollDelay\*1\.7/)});
+test('inbox render is keyed and reorders existing rows',()=>{assert.match(conv,/dataset\.id=id/);assert.match(conv,/list\.append\(row\)/)});
+test('message delta endpoint and duplicate suppression exist',()=>{assert.match(server,/\/api\/conversations\/:id\/messages/);assert.match(server,/id>\$2/);assert.match(conv,/store\.hasMessage\(chatId,id\)/);assert.match(conv,/messageAfterId/)});
+test('keyset pagination is deterministic',()=>{assert.match(server,/nextCursor/);assert.match(server,/c\.chat_id ASC/);assert.match(server,/lc_inbox_rank/);assert.match(conv,/params\.set\('cursor'/)});
+test('takeover return-ai and end-chat are serialized',()=>{assert.match(server,/takeover[\s\S]{0,300}withChatLock/);assert.match(server,/enable-ai[\s\S]{0,400}withChatLock/);assert.match(server,/\/end[\s\S]{0,300}withChatLock/)});
+test('1366 desktop layout has bounded grid and no root horizontal overflow',()=>{assert.match(css,/width:100%/);assert.match(css,/min-width:0/);assert.match(css,/grid-template-columns:310px minmax\(0,1fr\) 280px/)});
