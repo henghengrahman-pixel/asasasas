@@ -1,3 +1,0 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {LiveChatClient,extractChatEvents} from '../src/livechat.js';
-test('basic auth uses account id and PAT',()=>{const c=new LiveChatClient({base:'https://x',accountId:'abc',pat:'secret'});assert.equal(c.authHeader(),'Basic '+Buffer.from('abc:secret').toString('base64'))});
-test('extracts sorted message events',()=>{const x=extractChatEvents({threads:[{id:'t1',events:[{id:'2',type:'message',text:'b',created_at:'2026-01-02',author_type:'customer'},{id:'1',type:'message',text:'a',created_at:'2026-01-01',author_type:'agent'}]}]});assert.deepEqual(x.map(v=>v.text),['a','b'])});

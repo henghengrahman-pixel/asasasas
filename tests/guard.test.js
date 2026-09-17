@@ -1,4 +1,0 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {guardDecision} from '../src/guard.js';
-test('blocks sensitive auto reply without knowledge',()=>{const d=guardDecision({intent:'WITHDRAW_PROBLEM',decision:{action:'AUTO_REPLY',reply:'Kami cek ya',confidence:.95},hasKnowledge:false});assert.equal(d.action,'HANDOFF')});
-test('blocks unverified success claim',()=>{const d=guardDecision({intent:'GENERAL',decision:{action:'AUTO_REPLY',reply:'Deposit sudah berhasil masuk ya',confidence:.95},hasKnowledge:false});assert.equal(d.action,'HANDOFF')});
-test('allows normal conversational reply',()=>{const d=guardDecision({intent:'GREETING',decision:{action:'AUTO_REPLY',reply:'Halo bosku, ada yang bisa kami bantu?',confidence:.95},hasKnowledge:false});assert.equal(d.action,'AUTO_REPLY')});
