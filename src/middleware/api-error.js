@@ -1,3 +1,0 @@
-import crypto from 'node:crypto';
-export function requestContext(req,res,next){req.requestId=req.headers['x-request-id']||crypto.randomUUID();res.setHeader('X-Request-Id',req.requestId);next();}
-export function apiErrorHandler(err,req,res,next){if(!req.path.startsWith('/api/'))return next(err);const status=Number(err.status)||500;const code=String(err.message||'INTERNAL_ERROR').replace(/[^A-Z0-9_]/gi,'_').toUpperCase().slice(0,80);if(status>=500)console.error(JSON.stringify({timestamp:new Date().toISOString(),level:'error',module:'api',event:code,requestId:req.requestId,error:String(err.message||err)}));res.status(status).json({ok:false,error:code,message:status>=500?'Terjadi kesalahan internal.':String(err.message||'Request gagal.'),requestId:req.requestId});}
